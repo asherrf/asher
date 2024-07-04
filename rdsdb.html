@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PI Code Lookup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input[type="text"], input[type="submit"] {
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>PI Code Lookup</h1>
+    <form id="piCodeForm">
+        <label for="piCode">Enter 4-digit PI Code (Hex):</label>
+        <input type="text" id="piCode" name="piCode" maxlength="4" required>
+        <input type="submit" value="Lookup">
+    </form>
+    <div class="result" id="result"></div>
+
+    <script>
+        document.getElementById('piCodeForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const piCodeHex = document.getElementById('piCode').value;
+            const piCodeDec = parseInt(piCodeHex, 16);
+
+            fetch('https://asherr.org/USA_PICODES.csv')
+                .then(response => response.text())
+                .then(data => {
+                    const lines = data.split('\n');
+                    const results = [];
+
+                    lines.forEach(line => {
+                        const [pi, freq, callSign, state] = line.split(';');
+                        if (parseInt(pi) === piCodeDec) {
+                            results.push({ freq, callSign, state });
+                        }
+                    });
+
+                    const resultDiv = document.getElementById('result');
+                    resultDiv.innerHTML = '';
+
+                    if (results.length > 0) {
+                        results.forEach(result => {
+                            const frequency = parseInt(result.freq) / 100;
+                            resultDiv.innerHTML += `<p>Frequency: ${frequency} MHz, Call Sign: ${result.callSign}, State: ${result.state}</p>`;
+                        });
+                    } else {
+                        resultDiv.innerHTML = '<p>No matches found.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching the CSV file:', error);
+                    document.getElementById('result').innerHTML = '<p>Error fetching the data.</p>';
+                });
+        });
+    </script>
+</body>
+</html>
