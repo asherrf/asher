@@ -2,34 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-  <!-- Primary Meta Tags -->
-  <title>asherr.org</title>
-  <meta name="title" content="asherr.org">
-  <meta name="description" content="random site with radio stuff because idk">
-  
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://asherr.org">
-  <meta property="og:title" content="asherr.org">
-  <meta property="og:description" content="random site with radio stuff because idk">
-  <meta property="og:image" content="https://asherr.org/elprimo.gif">
-  
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://asherr.org">
-  <meta property="twitter:title" content="asherr.org">
-  <meta property="twitter:description" content="random site with radio stuff because idk">
-  <meta property="twitter:image" content="https://asherr.org/elprimo.gif">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Radio Station Images</title>
     <style>
         body {
             background-color: #4CAF50;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* Align items at the top */
             height: 100vh;
             margin: 0;
+            font-family: Arial, sans-serif;
         }
         #content {
             text-align: center;
@@ -39,6 +22,10 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             max-width: 600px;
             width: 100%;
+            margin-top: 20px; /* Add margin to separate from top */
+        }
+        #callsignForm {
+            margin-bottom: 20px;
         }
         #callsignInput {
             width: 80%;
@@ -51,6 +38,11 @@
         }
         #imageContainer {
             margin-top: 20px;
+            text-align: center;
+        }
+        .radio-image {
+            max-width: 100%; /* Adjust image size as needed */
+            margin-bottom: 10px; /* Add spacing between images */
         }
         #errorMessage {
             color: red;
@@ -93,6 +85,7 @@
             Promise.all(promises)
                 .then(images => {
                     images.forEach(img => {
+                        img.classList.add('radio-image'); // Add class for styling
                         imageContainer.appendChild(img);
                     });
                 })
@@ -108,7 +101,6 @@
             return new Promise((resolve, reject) => {
                 var img = new Image();
                 img.onload = function() {
-                    img.style.maxWidth = '100%'; // Adjust image size as needed
                     resolve(img);
                 };
                 img.onerror = function() {
