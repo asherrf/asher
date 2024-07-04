@@ -2,18 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+  <!-- Primary Meta Tags -->
+  <title>asherr.org</title>
+  <meta name="title" content="asherr.org">
+  <meta name="description" content="random site with radio stuff because idk">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://asherr.org">
+  <meta property="og:title" content="asherr.org">
+  <meta property="og:description" content="random site with radio stuff because idk">
+  <meta property="og:image" content="https://asherr.org/elprimo.gif">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://asherr.org">
+  <meta property="twitter:title" content="asherr.org">
+  <meta property="twitter:description" content="random site with radio stuff because idk">
+  <meta property="twitter:image" content="https://asherr.org/elprimo.gif">
     <title>Radio Station Images</title>
+    <style>
+        body {
+            background-color: #4CAF50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #content {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        #callsignInput {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        #imageContainer {
+            margin-top: 20px;
+        }
+        #errorMessage {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h2>Enter Callsign:</h2>
-    <form id="callsignForm">
-        <input type="text" id="callsignInput" placeholder="Enter callsign">
-        <button type="submit">Submit</button>
-    </form>
+    <div id="content">
+        <h2>Enter Callsign:</h2>
+        <form id="callsignForm">
+            <input type="text" id="callsignInput" placeholder="Enter callsign">
+            <button type="submit">Submit</button>
+        </form>
 
-    <div id="imageContainer">
-        <!-- Images will be loaded here -->
+        <div id="imageContainer">
+            <!-- Images or error message will be loaded here -->
+        </div>
     </div>
 
     <script>
@@ -31,13 +86,35 @@
             ];
 
             var imageContainer = document.getElementById('imageContainer');
-            imageContainer.innerHTML = ''; // Clear previous images
+            imageContainer.innerHTML = ''; // Clear previous images or error message
 
-            imageUrls.forEach(function(url) {
-                var img = document.createElement('img');
+            var promises = imageUrls.map(url => loadImage(url));
+
+            Promise.all(promises)
+                .then(images => {
+                    images.forEach(img => {
+                        imageContainer.appendChild(img);
+                    });
+                })
+                .catch(error => {
+                    var errorMessage = document.createElement('p');
+                    errorMessage.id = 'errorMessage';
+                    errorMessage.textContent = 'Callsign not found or rate limited.';
+                    imageContainer.appendChild(errorMessage);
+                });
+        }
+
+        function loadImage(url) {
+            return new Promise((resolve, reject) => {
+                var img = new Image();
+                img.onload = function() {
+                    img.style.maxWidth = '100%'; // Adjust image size as needed
+                    resolve(img);
+                };
+                img.onerror = function() {
+                    reject(new Error('Image failed to load.'));
+                };
                 img.src = url;
-                img.style.maxWidth = '100%'; // Adjust image size as needed
-                imageContainer.appendChild(img);
             });
         }
     </script>
