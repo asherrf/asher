@@ -19,359 +19,453 @@
 <SCRIPT LANGUAGE="JavaScript">
 function RDSCall(obj)
 {
-	csign=obj.csign.value.toUpperCase()
-	if (csign.length==4) {
-		letter1=csign.charCodeAt(0)-65
-		letter2=csign.charCodeAt(1)-65
-		letter3=csign.charCodeAt(2)-65
-		letter4=csign.charCodeAt(3)-65
-		picode=(26*26*letter2)+(26*letter3)+letter4
-		if (letter1==10) {
-			picode=picode+4096
-		} else {
-			picode=picode+21672
-		}
-	} else if (csign.length==3) {
-		switch(csign) {
-			case "KBW":
-				picode=parseInt("99A5",16);
-				break;
-			case "KCY":
-				picode=parseInt("99A6",16);
-				break;
-			case "KDB":
-				picode=parseInt("9990",16);
-				break;
-			case "KDF":
-				picode=parseInt("99A7",16);
-				break;
-			case "KEX":
-				picode=parseInt("9950",16);
-				break;
-			case "KFH":
-				picode=parseInt("9951",16);
-				break;
-			case "KFI":
-				picode=parseInt("9952",16);
-				break;
-			case "KGA":
-				picode=parseInt("9953",16);
-				break;
-			case "KGB":
-				picode=parseInt("9991",16);
-				break;
-			case "KGO":
-				picode=parseInt("9954",16);
-				break;
-			case "KGU":
-				picode=parseInt("9955",16);
-				break;
-			case "KGW":
-				picode=parseInt("9956",16);
-				break;
-			case "KGY":
-				picode=parseInt("9957",16);
-				break;
-			case "KHQ":
-				picode=parseInt("99AA",16);
-				break;
-			case "KID":
-				picode=parseInt("9958",16);
-				break;
-			case "KIT":
-				picode=parseInt("9959",16);
-				break;
-			case "KJR":
-				picode=parseInt("995A",16);
-				break;
-			case "KLO":
-				picode=parseInt("995B",16);
-				break;
-			case "KLZ":
-				picode=parseInt("995C",16);
-				break;
-			case "KMA":
-				picode=parseInt("995D",16);
-				break;
-			case "KMJ":
-				picode=parseInt("995E",16);
-				break;
-			case "KNX":
-				picode=parseInt("995F",16);
-				break;
-			case "KOA":
-				picode=parseInt("9960",16);
-				break;
-			case "KOB":
-				picode=parseInt("99AB",16);
-				break;
-			case "KOY":
-				picode=parseInt("9992",16);
-				break;
-			case "KPQ":
-				picode=parseInt("9993",16);
-				break;
-			case "KQV":
-				picode=parseInt("9964",16);
-				break;
-			case "KSD":
-				picode=parseInt("9994",16);
-				break;
-			case "KSL":
-				picode=parseInt("9965",16);
-				break;
-			case "KUJ":
-				picode=parseInt("9966",16);
-				break;
-			case "KUT":
-				picode=parseInt("9995",16);
-				break;
-			case "KVI":
-				picode=parseInt("9967",16);
-				break;
-			case "KWG":
-				picode=parseInt("9968",16);
-				break;
-			case "KXL":
-				picode=parseInt("9996",16);
-				break;
-			case "KXO":
-				picode=parseInt("9997",16);
-				break;
-			case "KYW":
-				picode=parseInt("996B",16);
-				break;
-			case "WBT":
-				picode=parseInt("9999",16);
-				break;
-			case "WBZ":
-				picode=parseInt("996D",16);
-				break;
-			case "WDZ":
-				picode=parseInt("996E",16);
-				break;
-			case "WEW":
-				picode=parseInt("996F",16);
-				break;
-			case "WGH":
-				picode=parseInt("999A",16);
-				break;
-			case "WGL":
-				picode=parseInt("9971",16);
-				break;
-			case "WGN":
-				picode=parseInt("9972",16);
-				break;
-			case "WGR":
-				picode=parseInt("9973",16);
-				break;
-			case "WGY":
-				picode=parseInt("999B",16);
-				break;
-			case "WHA":
-				picode=parseInt("9975",16);
-				break;
-			case "WHB":
-				picode=parseInt("9976",16);
-				break;
-			case "WHK":
-				picode=parseInt("9977",16);
-				break;
-			case "WHO":
-				picode=parseInt("9978",16);
-				break;
-			case "WHP":
-				picode=parseInt("999C",16);
-				break;
-			case "WIL":
-				picode=parseInt("999D",16);
-				break;
-			case "WIP":
-				picode=parseInt("997A",16);
-				break;
-			case "WIS":
-				picode=parseInt("99B3",16);
-				break;
-			case "WJR":
-				picode=parseInt("997B",16);
-				break;
-			case "WJW":
-				picode=parseInt("99B4",16);
-				break;
-			case "WJZ":
-				picode=parseInt("99B5",16);
-				break;
-			case "WKY":
-				picode=parseInt("997C",16);
-				break;
-			case "WLS":
-				picode=parseInt("997D",16);
-				break;
-			case "WLW":
-				picode=parseInt("997E",16);
-				break;
-			case "WMC":
-				picode=parseInt("999E",16);
-				break;
-			case "WMT":
-				picode=parseInt("999F",16);
-				break;
-			case "WOC":
-				picode=parseInt("9981",16);
-				break;
-			case "WOI":
-				picode=parseInt("99A0",16);
-				break;
-			case "WOL":
-				picode=parseInt("9983",16);
-				break;
-			case "WOR":
-				picode=parseInt("9984",16);
-				break;
-			case "WOW":
-				picode=parseInt("99A1",16);
-				break;
-			case "WRC":
-				picode=parseInt("99B9",16);
-				break;
-			case "WRR":
-				picode=parseInt("99A2",16);
-				break;
-			case "WSB":
-				picode=parseInt("99A3",16);
-				break;
-			case "WSM":
-				picode=parseInt("99A4",16);
-				break;
-			case "WWJ":
-				picode=parseInt("9988",16);
-				break;
-			case "WWL":
-				picode=parseInt("9989",16);
-				break;
+	picode=obj.picode.value.toUpperCase()
+	if (picode.substr(0,2)=="AF") {
+		part1=picode.substr(2,2)
+		part2="00"
+		picode=part1+part2
+	}
+	if (picode.substr(0,1)=="A") {
+		part1=picode.substr(1,1)
+		part2="0"
+		part3=picode.substr(2,2)
+		picode=part1+part2+part3
+	}
+	picode=hex2dec(picode)
+	csign="Bad code"
+	if (picode>4095) {
+		if (picode<39247) {
+			if (picode>21671) {
+				call1="W"
+				code=picode-21672
+			} else {
+				call1="K"
+				code=picode-4096
+			}
+			call2=getfloor(code/676)
+			code=code-(676*call2)
+			call3=getfloor(code/26)
+			call4=code-(26*call3)
+			csign2=chx(call2+65)
+			csign3=chx(call3+65)
+			csign4=chx(call4+65)
+			csign=call1+csign2+csign3+csign4
 		}
 	}
-	obj.picode.value=picode
-	pihex=toHex(picode)
-	pihex=pihex.toUpperCase()
-	nibble1=pihex.charCodeAt(0)-48
-	nibble2=pihex.charCodeAt(1)-48
-	nibble3=pihex.charCodeAt(2)-48
-	nibble4=pihex.charCodeAt(3)-48
-	if (nibble2==0) {
-		pihex=""
-		pihex+="A"
-		if (nibble1>9) {
-			nibble1=charFromCharCode(nibble1+48)
-		}
-		if (nibble3>9) {
-			nibble3=charFromCharCode(nibble3+48)
-		}
-		if (nibble4>9) {
-			nibble4=charFromCharCode(nibble4+48)
-		}
-		pihex+=nibble1
-		pihex+=nibble3
-		pihex+=nibble4
-	}
-	nibble1=pihex.charCodeAt(0)-48
-	nibble2=pihex.charCodeAt(1)-48
-	nibble3=pihex.charCodeAt(2)-48
-	nibble4=pihex.charCodeAt(3)-48
-	if (nibble3+nibble4==0) {
-		pihex=""
-		pihex+="A"
-		pihex+="F"
-		if (nibble1>9) {
-			nibble1=charFromCharCode(nibble1+48)
-		}
-		if (nibble2>9) {
-			nibble2=charFromCharCode(nibble2+48)
-		}
-		pihex+=nibble1
-		pihex+=nibble2
-	}
-	obj.pihex.value=pihex
+			switch(picode) {
+				case 49829:
+					csign="CIMF";
+					break;
+				case 17185:
+					csign="CJPT";
+					break;
+				case 39248:
+					csign="KEX";
+					break;
+				case 39249:
+					csign="KFH";
+					break;
 
+				case 39250:
+					csign="KFI";
+					break;
+
+				case 39251:
+					csign="KGA";
+					break;
+
+				case 39252:
+					csign="KGO";
+					break;
+
+				case 39253:
+					csign="KGU";
+					break;
+
+				case 39254:
+					csign="KGW";
+					break;
+
+				case 39255:
+					csign="KGY";
+					break;
+
+				case 39256:
+					csign="KID";
+					break;
+
+				case 39257:
+					csign="KIT";
+					break;
+
+				case 39258:
+					csign="KJR";
+					break;
+
+				case 39259:
+					csign="KLO";
+					break;
+
+				case 39260:
+					csign="KLZ";
+					break;
+
+				case 39261:
+					csign="KMA";
+					break;
+
+				case 39262:
+					csign="KMJ";
+					break;
+
+				case 39263:
+					csign="KNX";
+					break;
+
+				case 39264:
+					csign="KOA";
+					break;
+
+				case 39268:
+					csign="KQV";
+					break;
+
+				case 39269:
+					csign="KSL";
+					break;
+
+				case 39270:
+					csign="KUJ";
+					break;
+
+				case 39271:
+					csign="KVI";
+					break;
+
+				case 39272:
+					csign="KWG";
+					break;
+
+				case 39275:
+					csign="KYW";
+					break;
+
+				case 39277:
+					csign="WBZ";
+					break;
+
+				case 39278:
+					csign="WDZ";
+					break;
+
+				case 39279:
+					csign="WEW";
+					break;
+
+				case 39281:
+					csign="WGL";
+					break;
+
+				case 39282:
+					csign="WGN";
+					break;
+
+				case 39283:
+					csign="WGR";
+					break;
+
+				case 39285:
+					csign="WHA";
+					break;
+
+				case 39286:
+					csign="WHB";
+					break;
+
+				case 39287:
+					csign="WHK";
+					break;
+
+				case 39288:
+					csign="WHO";
+					break;
+
+				case 39290:
+					csign="WIP";
+					break;
+
+				case 39291:
+					csign="WJR";
+					break;
+
+				case 39292:
+					csign="WKY";
+					break;
+
+				case 39293:
+					csign="WLS";
+					break;
+
+				case 39294:
+					csign="WLW";
+					break;
+
+				case 39297:
+					csign="WOC";
+					break;
+
+				case 39299:
+					csign="WOL";
+					break;
+
+				case 39300:
+					csign="WOR";
+					break;
+
+				case 39304:
+					csign="WWJ";
+					break;
+
+				case 39305:
+					csign="WWL";
+					break;
+
+				case 39312:
+					csign="KDB";
+					break;
+
+				case 39313:
+					csign="KGB";
+					break;
+
+				case 39314:
+					csign="KOY";
+					break;
+
+				case 39315:
+					csign="KPQ";
+					break;
+
+				case 39316:
+					csign="KSD";
+					break;
+
+				case 39317:
+					csign="KUT";
+					break;
+
+				case 39318:
+					csign="KXL";
+					break;
+
+				case 39319:
+					csign="KXO";
+					break;
+
+				case 39321:
+					csign="WBT";
+					break;
+
+				case 39322:
+					csign="WGH";
+					break;
+
+				case 39323:
+					csign="WGY";
+					break;
+
+				case 39324:
+					csign="WHP";
+					break;
+
+				case 39325:
+					csign="WIL";
+					break;
+
+				case 39326:
+					csign="WMC";
+					break;
+
+				case 39327:
+					csign="WMT";
+					break;
+
+				case 39328:
+					csign="WOI";
+					break;
+
+				case 39329:
+					csign="WOW";
+					break;
+
+				case 39330:
+					csign="WRR";
+					break;
+
+				case 39331:
+					csign="WSB";
+					break;
+
+				case 39332:
+					csign="WSM";
+					break;
+
+				case 39333:
+					csign="KBW";
+					break;
+
+				case 39334:
+					csign="KCY";
+					break;
+				case 39335:
+					csign="KDF";
+					break;
+				case 39338:
+					csign="KHQ";
+					break;
+				case 39339:
+					csign="KOB";
+					break;
+				case 39347:
+					csign="WIS";
+					break;
+				case 39348:
+					csign="WJW";
+					break;
+				case 39349:
+					csign="WJZ";
+					break;
+				case 39353:
+					csign="WRC";
+					break;
+				case 26542:
+					csign="WHFI/CHFI";
+					break;
+				case 39250:
+					csign="KFI/CJBC";
+					break;
+				case 49160:
+					csign="CJBC-1";
+					break;
+				case 49158:
+					csign="CBCK";
+					break;
+				case 52010:
+					csign="CBLG";
+					break;
+				case 52007:
+					csign="CBLJ";
+					break;
+				case 52012:
+					csign="CBQT";
+					break;
+				case 52009:
+					csign="CBEB";
+					break;
+				case 28378:
+					csign="WJXY/CJXY";
+					break;
+				case 39251:
+					csign="KGA/CBCx";
+					break;
+				case 39252:
+					csign="KGO/CBCP";
+					break;
+				case 941:
+					csign="CKGE";
+					break;
+				case 16416:
+					csign="KSFW/CBLA";
+					break;
+				case 25414:
+					csign="WFNY/CFNY";
+					break;
+				case 27382:
+					csign="WILQ/CILQ";
+					break;
+				case 27424:
+					csign="WING/CING";
+					break;
+				case 26428:
+					csign="WHAY/CHAY";
+					break;
+				case 52033:
+					csign="CBA-FM";
+					break;
+				case 52034:
+					csign="CBCT";
+					break;
+				case 52045:
+					csign="CBHM";
+					break;
+				case 45084:
+					csign="CIQM";
+					break;
+				case 51806:
+					csign="CHNI, CJNI, or CKNI";
+					break;
+				case 12289:
+					csign="KLAS (Jamaica)";
+					break;
+				case 7877:
+					csign="CFPL";
+					break;
+				case 7760:
+					csign="ZFKY (Cayman Is.)";
+					break;
+				case 8151:
+					csign="ZFCC (Cayman Is.)";
+					break;
+				case 12656:
+					csign="WAVW";
+					break;
+				case 7908:
+					csign="KTCZ";
+					break;
+				case 42149:
+					csign="KSKZ or KWKR";
+					break;
+				case 45313:
+					csign="XHCTO";
+					break;
+				case 34784:
+					csign="XHTRR";
+					break;
+				case 39333:
+					csign="XHSR";
+					break;
+			}
+	obj.csign.value=csign
 }
 
-function charFromCharCode (charCode) {
-    return unescape('%' + charCode.toString(16));
+function chx(x)
+{
+	return String.fromCharCode(x)
 }
 
-function toHex(i) {
-	runningTotal = ''
-	quotient = hexQuotient(i);
-	remainder = eval(i + '-(' + quotient + '* 16)')
-	runningTotal = charToHex(remainder) + runningTotal;
-	while( quotient >= 16) {
-		savedQuotient = hexQuotient(quotient);
-		remainder = eval(quotient + '-(' + savedQuotient + '* 16)');
-		runningTotal = charToHex(remainder) + runningTotal;
-		quotient = savedQuotient;
-	} 
-	return charToHex(quotient) + runningTotal ;
+function getfloor(x)
+{
+	return Math.floor(x)
 }
 
-function hexQuotient(i) {
-	return Math.floor(eval(i +'/ 16'));
+function hex2dec(hex)
+{
+	return parseInt(hex,16)
 }
-
-function charToHex(i) {
-	if (i == 0) {
-		hexChar = '0' }
-	else { if (i == 1) {
-		hexChar = '1'}
-	else { if (i == 2) {
-		hexChar = '2'}
-	else { if (i == 3) {
-		hexChar = '3' }
-	else { if (i == 4) {
-		hexChar = '4'}
-	else { if (i == 5) {
-		hexChar = '5' }
-	else { if (i == 6) {
-		hexChar = '6'}
-	else { if (i == 7) {
-		hexChar = '7' }
-	else { if (i == 8) {
-		hexChar = '8'}
-	else { if (i == 9) {
-		hexChar = '9'}
-	else { if (i ==10) {
-		hexChar = 'a'}
-	else { if (i ==11) {
-		hexChar = 'b'}
-	else { if (i ==12) {
-		hexChar = 'c'}
-	else { if (i ==13) {
-		hexChar = 'd'}
-	else { if (i ==14) {
-		hexChar = 'e'}
-	else { if (i ==15) {
-		hexChar = 'f'}
-	} } } } } } } } } } } } } } }
-	return hexChar;
-}
-
-
-
-
-function decimalToHexadecimal(form) {
-	form.hexout.value = toHex(form.decimalin.value);
-}
-
-
-
 </SCRIPT>
-
+<H1>RDS Callsign Identifier (for USA)</H1>
+<I>This identifier does <U>not</U> work for non-U.S. stations!</I><p>
 <form>
 <table border="0">
-	<tr><td>Callsign:</td><td><input type="text" size="16" name="csign"> (do <u>not</u> enter the -FM or -LP suffix)</td></tr>
-	<tr><td>PI code:</td><td><input type="text" size="8" name="picode">(decimal)</td></tr>
-	<tr><td>PI code:</td><td><input type="text" size="8" name="pihex">(hexadecimal)</td></tr>
+	<tr><td>PI code:</td><td><input type="text" size="8" name="picode"></td></tr>
+	<tr><td>Callsign:</td><td><input type="text" size="16" name="csign"></td></tr>
 	<tr><td><input type="button" value="Calculate" onclick="RDSCall(this.form)"></td><td><input type="reset"></td></tr>
 </table>
 </form>
+<br>Some Canadian stations now work.  In some cases, Canadian stations are
+using the same codes as assigned to U.S. stations.<br>Often, the "C" is
+replaced by a "W". (so if you see a PI code that resolves to "WING" on
+107.9 while the real WING is <br>on 102.9, you're probably actually tuned to
+<U><B>C</B></U>ING.
 	</body>
 	</html>
