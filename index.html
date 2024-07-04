@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,6 +53,10 @@
   .gif-container {
     margin-top: 20px;
   }
+  /* Cursor change for clickable element */
+  #elPrimoGif {
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -64,7 +67,20 @@
     <a class="option" href="/mix">Mixshow Database</a>
   </div>
   <div class="gif-container">
-    <img src="https://asherr.org/elprimo.gif" alt="GIF not found" width="300">
+    <img id="elPrimoGif" src="https://asherr.org/elprimo.gif" alt="GIF not found" width="300" onclick="toggleSound()">
   </div>
+
+  <script>
+    var audio;
+
+    function toggleSound() {
+      if (audio && !audio.paused) {
+        audio.currentTime = 0; // Restart audio from the beginning
+      } else {
+        audio = new Audio('https://asherr.org/elprimo.mp3');
+      }
+      audio.play();
+    }
+  </script>
 </body>
 </html>
