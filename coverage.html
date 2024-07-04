@@ -3,33 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Your existing meta tags -->
-  
-  <!-- Primary Meta Tags -->
-  <title>asherr.org</title>
-  <meta name="title" content="asherr.org">
-  <meta name="description" content="random site with radio stuff because idk">
-  
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://asherr.org">
-  <meta property="og:title" content="asherr.org">
-  <meta property="og:description" content="random site with radio stuff because idk">
-  <meta property="og:image" content="https://asherr.org/elprimo.gif">
-  
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://asherr.org">
-  <meta property="twitter:title" content="asherr.org">
-  <meta property="twitter:description" content="random site with radio stuff because idk">
-  <meta property="twitter:image" content="https://asherr.org/elprimo.gif">
     <title>Radio Station Images</title>
     <style>
         body {
             background-color: #4CAF50;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Align items at the top */
+            align-items: flex-start;
             height: 100vh;
             margin: 0;
             font-family: Arial, sans-serif;
@@ -42,7 +22,7 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             max-width: 600px;
             width: 100%;
-            margin-top: 20px; /* Add margin to separate from top */
+            margin-top: 20px;
         }
         #callsignForm {
             margin-bottom: 20px;
@@ -61,8 +41,18 @@
             text-align: center;
         }
         .radio-image {
-            max-width: 100%; /* Adjust image size as needed */
-            margin-bottom: 10px; /* Add spacing between images */
+            max-width: 100%;
+            margin-bottom: 10px;
+        }
+        #linksContainer {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #warningMessage {
+            color: red;
+            font-weight: bold;
+            font-size: small;
+            margin-top: 10px;
         }
         #errorMessage {
             color: red;
@@ -78,6 +68,9 @@
             <button type="submit">Submit</button>
         </form>
 
+        <div id="linksContainer">
+            <!-- Links will be displayed here -->
+        </div>
         <div id="imageContainer">
             <!-- Images or error message will be loaded here -->
         </div>
@@ -87,6 +80,7 @@
         document.getElementById('callsignForm').addEventListener('submit', function(event) {
             event.preventDefault();
             var callsign = document.getElementById('callsignInput').value.trim().toUpperCase();
+            displayLinks(callsign);
             loadImages(callsign);
         });
 
@@ -129,6 +123,16 @@
                 };
                 img.src = url;
             });
+        }
+
+        function displayLinks(callsign) {
+            var linksContainer = document.getElementById('linksContainer');
+            linksContainer.innerHTML = ''; // Clear previous links
+
+            var websiteLink = `<a href="https://radio-locator.com/cgi-bin/url?id=${callsign}-FM&amp;rd=477809" rel="" target="${callsign}_FM" width="12" height="10" style="margin-right:6px" alt="">${callsign}-FM Website</a>`;
+            var streamLink = `<a href="https://radio-locator.com/cgi-bin/url?bc=y&amp;id=${callsign}-FM&amp;rd=477809" target="${callsign}_FM" width="12" height="10" style="margin-right:6px" alt="">${callsign}-FM Stream</a>`;
+
+            linksContainer.innerHTML = `${websiteLink}<br>${streamLink}<br><span id="warningMessage">These links may count to your radiolocator usage</span>`;
         }
     </script>
 </body>
