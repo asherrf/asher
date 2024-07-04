@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Station Images</title>
+</head>
+<body>
+    <h2>Enter Callsign:</h2>
+    <form id="callsignForm">
+        <input type="text" id="callsignInput" placeholder="Enter callsign">
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="imageContainer">
+        <!-- Images will be loaded here -->
+    </div>
+
+    <script>
+        document.getElementById('callsignForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var callsign = document.getElementById('callsignInput').value.trim().toUpperCase();
+            loadImages(callsign);
+        });
+
+        function loadImages(callsign) {
+            var imageUrls = [
+                `https://radio-locator.com/pats/${callsign}_FM_LUo.gif`,
+                `https://radio-locator.com/pats/${callsign}_FM_LU.gif`,
+                `https://radio-locator.com/pats/${callsign}_FM_LUi.gif`
+            ];
+
+            var imageContainer = document.getElementById('imageContainer');
+            imageContainer.innerHTML = ''; // Clear previous images
+
+            imageUrls.forEach(function(url) {
+                var img = document.createElement('img');
+                img.src = url;
+                img.style.maxWidth = '100%'; // Adjust image size as needed
+                imageContainer.appendChild(img);
+            });
+        }
+    </script>
+</body>
+</html>
