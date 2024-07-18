@@ -14,7 +14,7 @@
             <button type="submit">Load Stream</button>
         </form>
         <div class="stream-info">
-            <audio id="audioPlayer" controls></audio>
+            <audio id="audioPlayer"></audio>
             <div class="controls">
                 <button id="playButton">Play</button>
                 <button id="pauseButton">Pause</button>
@@ -27,6 +27,7 @@
                 <p id="songName"></p>
                 <p id="artistName"></p>
             </div>
+            <div id="warningMessage" class="hidden">Stream failed to load. Please try again.</div>
         </div>
     </div>
     <script src="scripts.js"></script>
