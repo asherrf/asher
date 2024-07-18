@@ -51,9 +51,23 @@ button:hover {
     margin-top: 20px;
 }
 
-audio {
-    width: 100%;
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin-bottom: 20px;
+}
+
+.controls button {
+    margin: 0 10px;
+}
+
+#volumeSlider {
+    width: 100px;
+}
+
+audio {
+    display: none;
 }
 
 #songInfo {
