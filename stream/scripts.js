@@ -1,54 +1,38 @@
-document.getElementById('streamForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const code = document.getElementById('codeInput').value;
-    const streamUrl = `https://stream.revma.ihrhls.com/zc${code}`;
+async function loadStream() {
+    const stationCode = document.getElementById('stationCode').value;
+    if (!stationCode) {
+        alert('Please enter a station code.');
+        return;
+    }
+
+    const streamUrl = `https://stream.revma.ihrhls.com/zc${stationCode}`;
     const audioPlayer = document.getElementById('audioPlayer');
     audioPlayer.src = streamUrl;
     audioPlayer.play();
 
-    const warningMessage = document.getElementById('warningMessage');
-    warningMessage.classList.add('hidden');
+    document.getElementById('playerContainer').style.display = 'block';
 
-    // Show warning message if stream fails to load within 5 seconds
-    const loadTimeout = setTimeout(() => {
-        if (audioPlayer.networkState === HTMLMediaElement.NETWORK_LOADING) {
-            warningMessage.classList.remove('hidden');
-            audioPlayer.pause();
-        }
-    }, 5000);
+    // Fetch metadata
+    try {
+        const response = await fetch(streamUrl, { method: 'GET' });
+        const metadata = response.headers.get('icy-description');
+        updateMetadata(metadata);
+    } catch (error) {
+        console.error('Error fetching stream metadata:', error);
+    }
+}
 
-    fetch(`https://stream.revma.ihrhls.com/zc${code}/metadata`)
-        .then(response => response.json())
-        .then(data => {
-            const metadata = data.title;
-            const [artist, title] = metadata.split(' - text="')[1].split('"')[0].split(' / ');
-            const artworkUrl = metadata.split('amgArtworkURL="')[1].split('"')[0];
+function updateMetadata(metadata) {
+    if (!metadata) return;
 
-            document.getElementById('streamName').innerText = `Stream Name: ${data.streamName}`;
-            document.getElementById('songName').innerText = `Song: ${title}`;
-            document.getElementById('artistName').innerText = `Artist: ${artist}`;
-            document.getElementById('artwork').src = artworkUrl;
+    const [artistInfo, songInfo, ...rest] = metadata.split(' - ');
+    const artist = artistInfo.split(' / ').join(', ');
+    const song = songInfo.split('text="')[1].split('"')[0];
+    const artworkUrl = metadata.split('amgArtworkURL="')[1].split('"')[0];
 
-            document.querySelector('.stream-info').style.display = 'block';
-        })
-        .catch(error => {
-            console.error('Error fetching metadata:', error);
-            warningMessage.classList.remove('hidden');
-        });
-});
-
-document.getElementById('playButton').addEventListener('click', function() {
-    document.getElementById('audioPlayer').play();
-});
-
-document.getElementById('pauseButton').addEventListener('click', function() {
-    document.getElementById('audioPlayer').pause();
-});
-
-document.getElementById('rewindButton').addEventListener('click', function() {
-    document.getElementById('audioPlayer').currentTime = 0;
-});
-
-document.getElementById('volumeSlider').addEventListener('input', function() {
-    document.getElementById('audioPlayer').volume = this.value;
-});
+    document.getElementById('streamName').innerText = artist;
+    document.getElementById('songInfo').innerText = song;
+    const artworkElement = document.getElementById('artwork');
+    artworkElement.src = artworkUrl;
+    artworkElement.style.display = 'block';
+}
