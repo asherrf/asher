@@ -6,6 +6,17 @@ document.getElementById('streamForm').addEventListener('submit', function(e) {
     audioPlayer.src = streamUrl;
     audioPlayer.play();
 
+    const warningMessage = document.getElementById('warningMessage');
+    warningMessage.classList.add('hidden');
+
+    // Show warning message if stream fails to load within 5 seconds
+    const loadTimeout = setTimeout(() => {
+        if (audioPlayer.networkState === HTMLMediaElement.NETWORK_LOADING) {
+            warningMessage.classList.remove('hidden');
+            audioPlayer.pause();
+        }
+    }, 5000);
+
     fetch(`https://stream.revma.ihrhls.com/zc${code}/metadata`)
         .then(response => response.json())
         .then(data => {
@@ -20,7 +31,10 @@ document.getElementById('streamForm').addEventListener('submit', function(e) {
 
             document.querySelector('.stream-info').style.display = 'block';
         })
-        .catch(error => console.error('Error fetching metadata:', error));
+        .catch(error => {
+            console.error('Error fetching metadata:', error);
+            warningMessage.classList.remove('hidden');
+        });
 });
 
 document.getElementById('playButton').addEventListener('click', function() {
