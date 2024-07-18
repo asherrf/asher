@@ -17,22 +17,27 @@ document.getElementById('streamForm').addEventListener('submit', function(e) {
         }
     }, 5000);
 
-    fetch(`https://stream.revma.ihrhls.com/zc${code}/metadata`)
-        .then(response => response.json())
-        .then(data => {
-            const metadata = data.title;
-            const [artist, title] = metadata.split(' - text="')[1].split('"')[0].split(' / ');
-            const artworkUrl = metadata.split('amgArtworkURL="')[1].split('"')[0];
+    audioPlayer.addEventListener('loadedmetadata', () => {
+        clearTimeout(loadTimeout);
+        warningMessage.classList.add('hidden');
+        document.querySelector('.stream-info').style.display = 'block';
+    });
 
-            document.getElementById('streamName').innerText = `Stream Name: ${data.streamName}`;
-            document.getElementById('songName').innerText = `Song: ${title}`;
-            document.getElementById('artistName').innerText = `Artist: ${artist}`;
-            document.getElementById('artwork').src = artworkUrl;
+    audioPlayer.addEventListener('playing', () => {
+        const metadata = audioPlayer.currentSrc; // Assuming metadata is in the currentSrc
+        const metadataString = audioPlayer.src.split("?")[1]; // Extract the metadata from the URL
 
-            document.querySelector('.stream-info').style.display = 'block';
-        })
-        .catch(error => {
-            console.error('Error fetching metadata:', error);
-            warningMessage.classList.remove('hidden');
-        });
+        const [artist, title] = metadataString.split(' - text="')[1].split('"')[0].split(' / ');
+        const artworkUrl = metadataString.split('amgArtworkURL="')[1].split('"')[0];
+
+        document.getElementById('streamName').innerText = `Stream Name: ${metadata}`;
+        document.getElementById('songName').innerText = `Song: ${title}`;
+        document.getElementById('artistName').innerText = `Artist: ${artist}`;
+        document.getElementById('artwork').src = artworkUrl;
+    });
+
+    audioPlayer.addEventListener('error', () => {
+        warningMessage.classList.remove('hidden');
+        document.querySelector('.stream-info').style.display = 'none';
+    });
 });
