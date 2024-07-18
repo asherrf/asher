@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iHeartRadio Stream</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>iHeartRadio Live Stream</h1>
+        <form id="streamForm">
+            <input type="text" id="codeInput" placeholder="Enter Station Code" required>
+            <button type="submit">Load Stream</button>
+        </form>
+        <div class="stream-info">
+            <audio id="audioPlayer" controls></audio>
+            <div id="streamName"></div>
+            <div id="songInfo">
+                <img id="artwork" src="" alt="Artwork">
+                <p id="songName"></p>
+                <p id="artistName"></p>
+            </div>
+        </div>
+    </div>
+    <script src="scripts.js"></script>
+</body>
+</html>
