@@ -23,26 +23,20 @@ document.getElementById('streamForm').addEventListener('submit', function(e) {
         document.querySelector('.stream-info').style.display = 'block';
     });
 
-    if ('mediaSession' in navigator) {
-        navigator.mediaSession.setActionHandler('play', function() { audioPlayer.play(); });
-        navigator.mediaSession.setActionHandler('pause', function() { audioPlayer.pause(); });
-        navigator.mediaSession.setActionHandler('seekbackward', function() { audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0); });
-        navigator.mediaSession.setActionHandler('seekforward', function() { audioPlayer.currentTime = Math.min(audioPlayer.currentTime + 10, audioPlayer.duration); });
-
-        audioPlayer.addEventListener('playing', () => {
-            const metadata = navigator.mediaSession.metadata;
+    audioPlayer.addEventListener('playing', () => {
+        setInterval(() => {
+            const metadata = audioPlayer.src.split("?")[1]; // Attempting to get metadata from the stream
             if (metadata) {
-                const artist = metadata.artist;
-                const title = metadata.title;
-                const artwork = metadata.artwork[0].src;
+                const [artist, title] = metadata.split(' - text="')[1].split('"')[0].split(' / ');
+                const artworkUrl = metadata.split('amgArtworkURL="')[1].split('"')[0];
 
                 document.getElementById('streamName').innerText = `Stream Name: ${code}`;
                 document.getElementById('songName').innerText = `Song: ${title}`;
                 document.getElementById('artistName').innerText = `Artist: ${artist}`;
-                document.getElementById('artwork').src = artwork;
+                document.getElementById('artwork').src = artworkUrl;
             }
-        });
-    }
+        }, 10000); // Check metadata every 10 seconds
+    });
 
     audioPlayer.addEventListener('error', () => {
         warningMessage.classList.remove('hidden');
