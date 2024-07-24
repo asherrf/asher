@@ -23,18 +23,26 @@ document.getElementById('streamForm').addEventListener('submit', function(e) {
         document.querySelector('.stream-info').style.display = 'block';
     });
 
-    audioPlayer.addEventListener('playing', () => {
-        const metadata = audioPlayer.currentSrc; // Assuming metadata is in the currentSrc
-        const metadataString = audioPlayer.src.split("?")[1]; // Extract the metadata from the URL
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', function() { audioPlayer.play(); });
+        navigator.mediaSession.setActionHandler('pause', function() { audioPlayer.pause(); });
+        navigator.mediaSession.setActionHandler('seekbackward', function() { audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0); });
+        navigator.mediaSession.setActionHandler('seekforward', function() { audioPlayer.currentTime = Math.min(audioPlayer.currentTime + 10, audioPlayer.duration); });
 
-        const [artist, title] = metadataString.split(' - text="')[1].split('"')[0].split(' / ');
-        const artworkUrl = metadataString.split('amgArtworkURL="')[1].split('"')[0];
+        audioPlayer.addEventListener('playing', () => {
+            const metadata = navigator.mediaSession.metadata;
+            if (metadata) {
+                const artist = metadata.artist;
+                const title = metadata.title;
+                const artwork = metadata.artwork[0].src;
 
-        document.getElementById('streamName').innerText = `Stream Name: ${metadata}`;
-        document.getElementById('songName').innerText = `Song: ${title}`;
-        document.getElementById('artistName').innerText = `Artist: ${artist}`;
-        document.getElementById('artwork').src = artworkUrl;
-    });
+                document.getElementById('streamName').innerText = `Stream Name: ${code}`;
+                document.getElementById('songName').innerText = `Song: ${title}`;
+                document.getElementById('artistName').innerText = `Artist: ${artist}`;
+                document.getElementById('artwork').src = artwork;
+            }
+        });
+    }
 
     audioPlayer.addEventListener('error', () => {
         warningMessage.classList.remove('hidden');
