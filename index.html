@@ -108,6 +108,59 @@
     .footer a.email:hover {
       background-color: #1976D2;
     }
+
+    /* Menu styles */
+    .menu {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .menu-icon {
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+    }
+
+    .menu-icon div {
+      width: 100%;
+      height: 4px;
+      background-color: white;
+    }
+
+    .menu-items {
+      display: none;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-top: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      border-radius: 5px;
+      padding: 10px;
+    }
+
+    .menu-items a {
+      color: white;
+      text-decoration: none;
+      padding: 10px;
+      display: block;
+      width: 100%;
+      text-align: right;
+      transition: background-color 0.3s;
+    }
+
+    .menu-items a:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .menu-open .menu-items {
+      display: flex;
+    }
   </style>
 </head>
 <body>
@@ -124,6 +177,21 @@
     <a href="https://youtube.com/ashman887" target="_blank">Subscribe</a>
     <a href="mailto:asher@asherr.org" class="email">Email</a>
   </div>
+  <div class="menu">
+    <div class="menu-icon" onclick="toggleMenu()">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+    <div class="menu-items">
+      <a href="https://asherr.org/coverage">Coverage Maps</a>
+      <a href="https://asherr.org/mix">Mixshows</a>
+      <a href="https://asherr.org/rdsdb">RDS Decode 1 - Database</a>
+      <a href="https://asherr.org/callsignlookup">RDS Callsign Lookup - Database</a>
+      <a href="https://asherr.org/rds">RDS Decode 2</a>
+      <a href="https://asherr.org/stream">Stream</a>
+    </div>
+  </div>
 
   <script>
     var audio;
@@ -135,6 +203,10 @@
         audio = new Audio('https://asherr.org/elprimo.mp3');
       }
       audio.play();
+    }
+
+    function toggleMenu() {
+      document.querySelector('.menu').classList.toggle('menu-open');
     }
   </script>
 </body>
