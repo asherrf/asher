@@ -3,7 +3,11 @@ document.getElementById('streamForm').addEventListener('submit', function(e) {
     const code = document.getElementById('codeInput').value;
     const streamUrl = `https://stream.revma.ihrhls.com/zc${code}`;
     const audioPlayer = document.getElementById('audioPlayer');
+    audioPlayer.src = streamUrl;
+    audioPlayer.play();
+
     const warningMessage = document.getElementById('warningMessage');
+    warningMessage.classList.add('hidden');
 
     // Show warning message if stream fails to load within 5 seconds
     const loadTimeout = setTimeout(() => {
@@ -13,44 +17,35 @@ document.getElementById('streamForm').addEventListener('submit', function(e) {
         }
     }, 5000);
 
-    // Fetch the final redirected URL
-    fetch(streamUrl, { method: 'HEAD', redirect: 'follow' })
-        .then(response => {
-            if (response.ok) {
-                const finalUrl = response.url;
-                audioPlayer.src = finalUrl;
-                audioPlayer.play();
+    audioPlayer.addEventListener('loadedmetadata', () => {
+        clearTimeout(loadTimeout);
+        warningMessage.classList.add('hidden');
+        document.querySelector('.stream-info').style.display = 'block';
+    });
 
-                audioPlayer.addEventListener('loadedmetadata', () => {
-                    clearTimeout(loadTimeout);
-                    warningMessage.classList.add('hidden');
-                    document.querySelector('.stream-info').style.display = 'block';
-                });
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', function() { audioPlayer.play(); });
+        navigator.mediaSession.setActionHandler('pause', function() { audioPlayer.pause(); });
+        navigator.mediaSession.setActionHandler('seekbackward', function() { audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0); });
+        navigator.mediaSession.setActionHandler('seekforward', function() { audioPlayer.currentTime = Math.min(audioPlayer.currentTime + 10, audioPlayer.duration); });
 
-                audioPlayer.addEventListener('playing', () => {
-                    // Assuming metadata is present in the final URL
-                    const metadataString = finalUrl.split("?")[1]; // Extract the metadata from the URL
+        audioPlayer.addEventListener('playing', () => {
+            const metadata = navigator.mediaSession.metadata;
+            if (metadata) {
+                const artist = metadata.artist;
+                const title = metadata.title;
+                const artwork = metadata.artwork[0].src;
 
-                    if (metadataString) {
-                        const [artist, title] = metadataString.split(' - text="')[1].split('"')[0].split(' / ');
-                        const artworkUrl = metadataString.split('amgArtworkURL="')[1].split('"')[0];
-
-                        document.getElementById('streamName').innerText = `Stream Name: ${code}`;
-                        document.getElementById('songName').innerText = `Song: ${title}`;
-                        document.getElementById('artistName').innerText = `Artist: ${artist}`;
-                        document.getElementById('artwork').src = artworkUrl;
-                    }
-                });
-
-                audioPlayer.addEventListener('error', () => {
-                    warningMessage.classList.remove('hidden');
-                    document.querySelector('.stream-info').style.display = 'none';
-                });
-            } else {
-                warningMessage.classList.remove('hidden');
+                document.getElementById('streamName').innerText = `Stream Name: ${code}`;
+                document.getElementById('songName').innerText = `Song: ${title}`;
+                document.getElementById('artistName').innerText = `Artist: ${artist}`;
+                document.getElementById('artwork').src = artwork;
             }
-        })
-        .catch(() => {
-            warningMessage.classList.remove('hidden');
         });
+    }
+
+    audioPlayer.addEventListener('error', () => {
+        warningMessage.classList.remove('hidden');
+        document.querySelector('.stream-info').style.display = 'none';
+    });
 });
