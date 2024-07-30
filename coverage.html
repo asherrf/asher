@@ -85,12 +85,19 @@
         });
 
         function loadImages(callsign) {
-            var prefix = (callsign.startsWith('X') || callsign.startsWith('C')) ? 'FU' : 'LU';
-            var imageUrls = [
-                `https://radio-locator.com/pats/${callsign}_FM_${prefix}o.gif`,
-                `https://radio-locator.com/pats/${callsign}_FM_${prefix}.gif`,
-                `https://radio-locator.com/pats/${callsign}_FM_${prefix}i.gif`
-            ];
+            var isTranslator = /^[WK]\d{3}[A-Z]{2}$/.test(callsign);
+            var prefix = isTranslator ? 'FX' : 'LU';
+            var imageUrls = isTranslator
+                ? [
+                    `https://radio-locator.com/pats/${callsign}_FX_LUo.gif`,
+                    `https://radio-locator.com/pats/${callsign}_FX_LU.gif`,
+                    `https://radio-locator.com/pats/${callsign}_FX_LUi.gif`
+                  ]
+                : [
+                    `https://radio-locator.com/pats/${callsign}_FM_LUo.gif`,
+                    `https://radio-locator.com/pats/${callsign}_FM_LU.gif`,
+                    `https://radio-locator.com/pats/${callsign}_FM_LUi.gif`
+                  ];
 
             var imageContainer = document.getElementById('imageContainer');
             imageContainer.innerHTML = ''; // Clear previous images or error message
