@@ -62,7 +62,7 @@
 </head>
 <body>
     <div id="content">
-        <h2>Enter FM Callsign:</h2>
+        <h2>Enter Callsign:</h2>
         <form id="callsignForm">
             <input type="text" id="callsignInput" placeholder="Enter callsign">
             <button type="submit">Submit</button>
@@ -86,7 +86,8 @@
 
         function loadImages(callsign) {
             var isTranslator = /^[WK]\d{3}[A-Z]{2}$/.test(callsign);
-            var prefix = isTranslator ? 'FX' : 'LU';
+            var isCanadianOrMexican = callsign.startsWith('X') || callsign.startsWith('C');
+            var prefix = isTranslator ? 'FX' : (isCanadianOrMexican ? 'FU' : 'LU');
             var imageUrls = isTranslator
                 ? [
                     `https://radio-locator.com/pats/${callsign}_FX_LUo.gif`,
@@ -94,9 +95,9 @@
                     `https://radio-locator.com/pats/${callsign}_FX_LUi.gif`
                   ]
                 : [
-                    `https://radio-locator.com/pats/${callsign}_FM_LUo.gif`,
-                    `https://radio-locator.com/pats/${callsign}_FM_LU.gif`,
-                    `https://radio-locator.com/pats/${callsign}_FM_LUi.gif`
+                    `https://radio-locator.com/pats/${callsign}_FM_${prefix}o.gif`,
+                    `https://radio-locator.com/pats/${callsign}_FM_${prefix}.gif`,
+                    `https://radio-locator.com/pats/${callsign}_FM_${prefix}i.gif`
                   ];
 
             var imageContainer = document.getElementById('imageContainer');
