@@ -42,6 +42,12 @@ button {
     transition: background 0.3s;
 }
 
+#samples {
+    margin-top: 20px;
+    text-align: center;
+    color: #4aa8db;
+}
+
 button:hover {
     background: #a777e3;
 }
@@ -69,12 +75,6 @@ audio {
 
 #songInfo p {
     margin: 0;
-}
-
-#samples {
-    margin-top: 20px;
-    text-align: center;
-    color: #4aa8db;
 }
 
 #warningMessage {
