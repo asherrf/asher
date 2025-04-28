@@ -1,143 +1,122 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
+  <title>Current Township Tracker</title>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PA Township Tracker</title>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-    #map {
-      height: 400px;
-      width: 100%;
-      margin-top: 20px;
-    }
-  </style>
-
-  <!-- Leaflet CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 100vh; width: 100%; }
+  </style>
 </head>
-
 <body>
 
-<h1>PA Township Tracker</h1>
-<p id="township">Finding your township...</p>
-<p id="progress"></p>
 <div id="map"></div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 
 <script>
-
-let map;
-let yourTownshipName = '';
-let visitedTownships = new Set();
-
-// Load saved visited townships
-if (localStorage.getItem('visitedTownships')) {
-  visitedTownships = new Set(JSON.parse(localStorage.getItem('visitedTownships')));
-}
-
-function init() {
-  if (!navigator.geolocation) {
-    document.getElementById('township').textContent = 'Geolocation is not supported by your browser.';
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(success, error);
-}
-
-function success(position) {
-  const latitude = position.coords.latitude;
-  const longitude = position.coords.longitude;
-
-  // Initialize map
-  map = L.map('map').setView([latitude, longitude], 13);
-
+  const map = L.map('map').setView([40.2732, -76.8867], 8); // Default center: PA
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
+    maxZoom: 19,
   }).addTo(map);
 
-  // Add your location marker
-  L.marker([latitude, longitude]).addTo(map)
-    .bindPopup('You are here.')
-    .openPopup();
+  let townshipLayer;
+  let currentHighlight = null;
+  let userMarker = null;
+  let lastTownshipName = null;
 
-  // Reverse geocode to find township
-  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=12`)
+  // Load your townships GeoJSON
+  fetch('townships.geojson') // <-- make sure you upload townships.geojson next to this file
     .then(response => response.json())
     .then(data => {
-      if (data.address) {
-        if (data.address.town) {
-          yourTownshipName = data.address.town;
-        } else if (data.address.village) {
-          yourTownshipName = data.address.village;
-        } else if (data.address.city) {
-          yourTownshipName = data.address.city;
-        } else if (data.address.hamlet) {
-          yourTownshipName = data.address.hamlet;
-        } else if (data.address.county) {
-          yourTownshipName = data.address.county + ' County';
-        } else {
-          yourTownshipName = 'Unknown Township';
-        }
-      }
-      document.getElementById('township').textContent = 'You are currently in: ' + yourTownshipName;
-
-      // Save this township to visited list
-      visitedTownships.add(yourTownshipName);
-      localStorage.setItem('visitedTownships', JSON.stringify(Array.from(visitedTownships)));
-
-      loadTownships(); // Now load GeoJSON and draw boundaries
-    })
-    .catch(() => {
-      document.getElementById('township').textContent = 'Unable to determine township.';
-    });
-}
-
-function error() {
-  document.getElementById('township').textContent = 'Unable to retrieve your location.';
-}
-
-function loadTownships() {
-  fetch('townships.geojson')
-    .then(response => response.json())
-    .then(geojsonData => {
-      let totalTownships = geojsonData.features.length;
-
-      L.geoJSON(geojsonData, {
-        style: function(feature) {
-          let name = feature.properties.NAME;
-          if (name === yourTownshipName) {
-            // You are here - highlight it red
-            return { color: "red", weight: 2, fillOpacity: 0.3 };
-          } else if (visitedTownships.has(name)) {
-            // Previously visited - highlight it green
-            return { color: "green", weight: 1, fillOpacity: 0.2 };
-          } else {
-            // Default style
-            return { color: "blue", weight: 1, fillOpacity: 0.05 };
-          }
+      townshipLayer = L.geoJSON(data, {
+        style: {
+          color: "#3388ff",
+          weight: 1,
+          fillOpacity: 0.1
         },
         onEachFeature: function (feature, layer) {
-          if (feature.properties.NAME) {
-            layer.bindPopup(feature.properties.NAME);
-          }
+          layer.bindPopup(`${feature.properties.NAME}`);
         }
       }).addTo(map);
 
-      // Update progress
-      document.getElementById('progress').textContent = `Visited ${visitedTownships.size} out of ${totalTownships} municipalities`;
+      // Start tracking user location after loading GeoJSON
+      startTracking();
     });
-}
 
-init();
+  function startTracking() {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported.");
+      return;
+    }
 
+    // Update location every 3 seconds
+    setInterval(() => {
+      navigator.geolocation.getCurrentPosition(updateLocation, locationError);
+    }, 3000);
+  }
+
+  function updateLocation(position) {
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
+    const userPoint = turf.point([lon, lat]);
+
+    // Move the user marker
+    if (userMarker) {
+      userMarker.setLatLng([lat, lon]);
+    } else {
+      userMarker = L.marker([lat, lon]).addTo(map).bindPopup("You are here").openPopup();
+    }
+
+    // Check which township user is in
+    let foundTownship = null;
+    let foundName = null;
+
+    townshipLayer.eachLayer(function(layer) {
+      const polygon = layer.feature;
+      if (turf.booleanPointInPolygon(userPoint, polygon)) {
+        foundTownship = layer;
+        foundName = polygon.properties.NAME; // or whatever your township name field is
+      }
+    });
+
+    // Highlight the township if found
+    if (foundTownship) {
+      if (currentHighlight !== foundTownship) {
+        // Reset previous
+        if (currentHighlight) {
+          townshipLayer.resetStyle(currentHighlight);
+        }
+        // Highlight new
+        foundTownship.setStyle({
+          color: "red",
+          weight: 3,
+          fillOpacity: 0.3
+        });
+        currentHighlight = foundTownship;
+
+        foundTownship.openPopup();
+
+        // Only zoom if entering a *new* township
+        if (foundName !== lastTownshipName) {
+          map.fitBounds(foundTownship.getBounds(), { maxZoom: 14 });
+          lastTownshipName = foundName;
+        }
+      }
+    } else {
+      if (currentHighlight) {
+        townshipLayer.resetStyle(currentHighlight);
+        currentHighlight = null;
+      }
+    }
+  }
+
+  function locationError(err) {
+    console.warn(`ERROR(${err.code}): ${err.message}`);
+  }
 </script>
 
 </body>
