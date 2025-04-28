@@ -7,14 +7,21 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body { margin: 0; font-family: Arial, sans-serif; }
-    #map { height: 90vh; width: 100%; }
     #info { padding: 10px; font-size: 20px; background: #f0f0f0; text-align: center; }
+    #map { height: 80vh; width: 100%; }
+    #visited { padding: 10px; background: #fafafa; font-size: 16px; }
+    #visited ul { list-style: none; padding: 0; margin: 0; }
+    #visited li { margin-bottom: 5px; }
   </style>
 </head>
 <body>
 
 <div id="info">Loading your location...</div>
 <div id="map"></div>
+<div id="visited">
+  <strong>Visited Townships (<span id="visited-count">0</span>):</strong>
+  <ul id="visited-list"></ul>
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
@@ -29,6 +36,7 @@
   let currentHighlight = null;
   let userMarker = null;
   let lastTownshipName = null;
+  let visitedTownships = new Set();
 
   // Load your townships GeoJSON
   fetch('townships.geojson') // <-- replace with your actual geojson
@@ -86,8 +94,8 @@
 
         document.getElementById('info').textContent = `Current Township: ${townshipName}`;
 
-        // Highlight in the geojson
         highlightTownship(townshipName);
+        trackVisitedTownship(townshipName);
       })
       .catch(err => {
         console.error('Reverse geocoding error:', err);
@@ -132,6 +140,23 @@
     if (!found && currentHighlight) {
       townshipLayer.resetStyle(currentHighlight);
       currentHighlight = null;
+    }
+  }
+
+  function trackVisitedTownship(townshipName) {
+    if (!townshipName || townshipName === "Unknown") return;
+    
+    // Only add if it's a new township
+    if (!visitedTownships.has(townshipName)) {
+      visitedTownships.add(townshipName);
+
+      // Update counter
+      document.getElementById('visited-count').textContent = visitedTownships.size;
+
+      // Add to list
+      const li = document.createElement('li');
+      li.textContent = townshipName;
+      document.getElementById('visited-list').appendChild(li);
     }
   }
 
