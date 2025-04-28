@@ -7,18 +7,20 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body { margin: 0; font-family: Arial, sans-serif; }
-    #map { height: 100vh; width: 100%; }
+    #map { height: 90vh; width: 100%; }
+    #info { padding: 10px; font-size: 20px; background: #f0f0f0; text-align: center; }
   </style>
 </head>
 <body>
 
+<div id="info">Loading your location...</div>
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 
 <script>
-  const map = L.map('map').setView([40.2732, -76.8867], 8); // Default center: PA
+  const map = L.map('map').setView([40.2732, -76.8867], 8); // Pennsylvania center
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
   }).addTo(map);
@@ -29,7 +31,7 @@
   let lastTownshipName = null;
 
   // Load your townships GeoJSON
-  fetch('townships.geojson') // <-- make sure you upload townships.geojson next to this file
+  fetch('townships.geojson') // <-- replace with your actual geojson
     .then(response => response.json())
     .then(data => {
       townshipLayer = L.geoJSON(data, {
@@ -39,11 +41,11 @@
           fillOpacity: 0.1
         },
         onEachFeature: function (feature, layer) {
-          layer.bindPopup(`${feature.properties.NAME}`);
+          const name = feature.properties.MUNICIPAL_NAME || "Unknown";
+          layer.bindPopup(name);
         }
       }).addTo(map);
 
-      // Start tracking user location after loading GeoJSON
       startTracking();
     });
 
@@ -53,7 +55,13 @@
       return;
     }
 
-    // Update location every 3 seconds
+    navigator.geolocation.getCurrentPosition(position => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      map.setView([lat, lon], 13);
+      updateLocation(position); // First immediate update
+    }, locationError);
+
     setInterval(() => {
       navigator.geolocation.getCurrentPosition(updateLocation, locationError);
     }, 3000);
@@ -62,7 +70,6 @@
   function updateLocation(position) {
     const lat = position.coords.latitude;
     const lon = position.coords.longitude;
-    const userPoint = turf.point([lon, lat]);
 
     // Move the user marker
     if (userMarker) {
@@ -71,46 +78,60 @@
       userMarker = L.marker([lat, lon]).addTo(map).bindPopup("You are here").openPopup();
     }
 
-    // Check which township user is in
-    let foundTownship = null;
-    let foundName = null;
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&zoom=10&format=json`)
+      .then(response => response.json())
+      .then(data => {
+        const address = data.address;
+        const townshipName = address.town || address.city || address.village || address.hamlet || "Unknown";
+
+        document.getElementById('info').textContent = `Current Township: ${townshipName}`;
+
+        // Highlight in the geojson
+        highlightTownship(townshipName);
+      })
+      .catch(err => {
+        console.error('Reverse geocoding error:', err);
+      });
+  }
+
+  function highlightTownship(townshipName) {
+    if (!townshipLayer) return;
+
+    let found = false;
 
     townshipLayer.eachLayer(function(layer) {
-      const polygon = layer.feature;
-      if (turf.booleanPointInPolygon(userPoint, polygon)) {
-        foundTownship = layer;
-        foundName = polygon.properties.NAME; // or whatever your township name field is
+      const name = layer.feature.properties.MUNICIPAL_NAME;
+      if (name && townshipName && name.toLowerCase().includes(townshipName.toLowerCase())) {
+        found = true;
+
+        if (currentHighlight !== layer) {
+          // Reset previous
+          if (currentHighlight) {
+            townshipLayer.resetStyle(currentHighlight);
+          }
+
+          // Highlight new
+          layer.setStyle({
+            color: "red",
+            weight: 3,
+            fillOpacity: 0.3
+          });
+          currentHighlight = layer;
+
+          // Zoom only when entering a new township
+          if (name !== lastTownshipName) {
+            map.fitBounds(layer.getBounds(), { maxZoom: 14 });
+            lastTownshipName = name;
+          }
+
+          layer.openPopup();
+        }
       }
     });
 
-    // Highlight the township if found
-    if (foundTownship) {
-      if (currentHighlight !== foundTownship) {
-        // Reset previous
-        if (currentHighlight) {
-          townshipLayer.resetStyle(currentHighlight);
-        }
-        // Highlight new
-        foundTownship.setStyle({
-          color: "red",
-          weight: 3,
-          fillOpacity: 0.3
-        });
-        currentHighlight = foundTownship;
-
-        foundTownship.openPopup();
-
-        // Only zoom if entering a *new* township
-        if (foundName !== lastTownshipName) {
-          map.fitBounds(foundTownship.getBounds(), { maxZoom: 14 });
-          lastTownshipName = foundName;
-        }
-      }
-    } else {
-      if (currentHighlight) {
-        townshipLayer.resetStyle(currentHighlight);
-        currentHighlight = null;
-      }
+    if (!found && currentHighlight) {
+      townshipLayer.resetStyle(currentHighlight);
+      currentHighlight = null;
     }
   }
 
