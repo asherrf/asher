@@ -4,18 +4,15 @@
   <title>Municipality Tracker</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link id="leaflet-css" rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #111;
-      color: #eee;
     }
     #info {
       padding: 10px;
       font-size: 20px;
-      background: #222;
       text-align: center;
     }
     #map {
@@ -26,36 +23,46 @@
       position: absolute;
       top: 10px;
       right: 10px;
-      background: #222;
-      color: #eee;
       padding: 5px 10px;
       border-radius: 5px;
       font-size: 14px;
     }
     #visited {
       padding: 10px;
-      background: #181818;
       font-size: 16px;
     }
     #visited ul {
       list-style: none;
       padding: 0;
-      margin: 0;
+      margin: 10px 0 0 0;
     }
     #visited li {
       margin-bottom: 5px;
     }
-    #reset-btn {
+    button {
       background: #333;
       color: #eee;
       border: none;
       padding: 8px 12px;
       border-radius: 5px;
-      margin-top: 10px;
+      margin: 5px 2px 5px 0;
       cursor: pointer;
     }
-    #reset-btn:hover {
+    button:hover {
       background: #555;
+    }
+    #progress-container {
+      margin-top: 10px;
+      background: #ccc;
+      border-radius: 5px;
+      overflow: hidden;
+      height: 20px;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #4caf50;
+      transition: width 0.5s;
     }
   </style>
 </head>
@@ -65,17 +72,24 @@
 <div id="map"></div>
 <div id="update-time">Last Updated: --</div>
 <div id="visited">
-  <strong>Visited Municipalities (<span id="visited-count">0</span>, <span id="visited-percent">0</span>%)</strong>
+  <strong>Visited Municipalities (<span id="visited-count">0</span>, <span id="visited-percent">0.00</span>%)</strong>
+  <div id="progress-container">
+    <div id="progress-bar"></div>
+  </div>
   <ul id="visited-list"></ul>
-  <button id="reset-btn" onclick="resetProgress()">Reset Progress</button>
+  <button onclick="resetProgress()">Reset Progress</button>
+  <button onclick="downloadVisited()">Download Visited List</button>
+  <button onclick="toggleTheme()">Toggle Light/Dark Mode</button>
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 
 <script>
-  const map = L.map('map').setView([40.2732, -76.8867], 8); // Center on PA
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  let darkMode = true; // default start in dark mode
+
+  const map = L.map('map').setView([40.2732, -76.8867], 8);
+  let tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap contributors & CartoDB',
     subdomains: 'abcd',
     maxZoom: 19
@@ -95,7 +109,7 @@
     return classCode;
   }
 
-  fetch('townships.geojson') // <-- your geojson file
+  fetch('townships.geojson')
     .then(response => response.json())
     .then(data => {
       totalTownships = data.features.length;
@@ -170,7 +184,6 @@
     if (!townshipLayer) return;
 
     if (currentHighlight) {
-      // Reset previously highlighted
       const name = currentHighlight.feature.properties.MUNICIPAL_NAME || "";
       currentHighlight.setStyle({
         color: visitedTownships.has(name) ? "green" : "#3388ff",
@@ -234,8 +247,11 @@
     });
 
     document.getElementById('visited-count').textContent = visitedTownships.size;
-    const percent = ((visitedTownships.size / totalTownships) * 100).toFixed(1);
+    const percent = ((visitedTownships.size / totalTownships) * 100).toFixed(2);
     document.getElementById('visited-percent').textContent = percent;
+
+    const progressBar = document.getElementById('progress-bar');
+    progressBar.style.width = percent + "%";
   }
 
   function saveVisitedTownships() {
@@ -248,6 +264,43 @@
       saveVisitedTownships();
       populateVisitedList();
       location.reload();
+    }
+  }
+
+  function downloadVisited() {
+    const data = Array.from(visitedTownships).join("\n");
+    const blob = new Blob([data], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "visited_municipalities.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function toggleTheme() {
+    darkMode = !darkMode;
+    map.removeLayer(tileLayer);
+
+    if (darkMode) {
+      tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors & CartoDB',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }).addTo(map);
+      document.body.style.backgroundColor = "#111";
+      document.body.style.color = "#eee";
+      document.getElementById('update-time').style.backgroundColor = "#222";
+    } else {
+      tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(map);
+      document.body.style.backgroundColor = "#fff";
+      document.body.style.color = "#000";
+      document.getElementById('update-time').style.backgroundColor = "#ccc";
     }
   }
 
