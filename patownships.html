@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PA Township Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    #map {
+      height: 400px;
+      width: 100%;
+      margin-top: 20px;
+    }
+  </style>
+
+  <!-- Leaflet.js CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+
+<body>
+
+<h1>PA Township Tracker</h1>
+<p id="township">Finding your township...</p>
+<div id="map"></div>
+
+<!-- Leaflet.js JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+function init() {
+  if (!navigator.geolocation) {
+    document.getElementById('township').textContent = 'Geolocation is not supported by your browser.';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(success, error);
+}
+
+function success(position) {
+  const latitude = position.coords.latitude;
+  const longitude = position.coords.longitude;
+
+  // Show map
+  var map = L.map('map').setView([latitude, longitude], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  L.marker([latitude, longitude]).addTo(map)
+    .bindPopup('You are here.')
+    .openPopup();
+
+  // Get township name
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=12`)
+    .then(response => response.json())
+    .then(data => {
+      let townshipName = '';
+
+      if (data.address) {
+        if (data.address.town) {
+          townshipName = data.address.town;
+        } else if (data.address.village) {
+          townshipName = data.address.village;
+        } else if (data.address.city) {
+          townshipName = data.address.city;
+        } else if (data.address.hamlet) {
+          townshipName = data.address.hamlet;
+        } else if (data.address.county) {
+          townshipName = data.address.county + ' County';
+        } else {
+          townshipName = 'Unknown Township';
+        }
+      }
+
+      document.getElementById('township').textContent = 'You are currently in: ' + townshipName;
+    })
+    .catch(() => {
+      document.getElementById('township').textContent = 'Unable to determine township.';
+    });
+}
+
+function error() {
+  document.getElementById('township').textContent = 'Unable to retrieve your location.';
+}
+
+init();
+</script>
+
+</body>
+</html>
