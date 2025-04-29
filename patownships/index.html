@@ -9,6 +9,8 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #eee;
     }
     #info {
       padding: 10px;
@@ -26,6 +28,7 @@
       padding: 5px 10px;
       border-radius: 5px;
       font-size: 14px;
+      background-color: #222;
     }
     #visited {
       padding: 10px;
@@ -89,25 +92,11 @@
   let darkMode = true; // default start in dark mode
 
   const map = L.map('map').setView([40.2732, -76.8867], 8);
-
-  // Ensure dark mode is active on page load
-  if (darkMode) {
-    document.body.style.backgroundColor = "#111";
-    document.body.style.color = "#eee";
-    document.getElementById('update-time').style.backgroundColor = "#222";
-
-    // Dark tile layer
-    tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap contributors & CartoDB',
-      subdomains: 'abcd',
-      maxZoom: 19
-    }).addTo(map);
-  } else {
-    tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(map);
-  }
+  let tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors & CartoDB',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
 
   let townshipLayer;
   let currentHighlight = null;
@@ -130,9 +119,15 @@
       townshipLayer = L.geoJSON(data, {
         style: function (feature) {
           const name = feature.properties.MUNICIPAL_NAME || "";
-          if (visitedTownships.has(name)) {
-            return { color: "green", weight: 2, fillOpacity: 0.2 };
+          const cleanName = name.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
+
+          for (const visited of visitedTownships) {
+            const cleanVisited = visited.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
+            if (cleanName === cleanVisited) {
+              return { color: "green", weight: 2, fillOpacity: 0.2 };
+            }
           }
+
           return { color: "#3388ff", weight: 1, fillOpacity: 0.1 };
         },
         onEachFeature: function (feature, layer) {
@@ -199,11 +194,17 @@
 
     if (currentHighlight) {
       const name = currentHighlight.feature.properties.MUNICIPAL_NAME || "";
-      currentHighlight.setStyle({
-        color: visitedTownships.has(name) ? "green" : "#3388ff",
-        weight: visitedTownships.has(name) ? 2 : 1,
-        fillOpacity: visitedTownships.has(name) ? 0.2 : 0.1
-      });
+      const cleanName = name.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
+
+      for (const visited of visitedTownships) {
+        const cleanVisited = visited.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
+        if (cleanName === cleanVisited) {
+          currentHighlight.setStyle({ color: "green", weight: 2, fillOpacity: 0.2 });
+          break;
+        } else {
+          currentHighlight.setStyle({ color: "#3388ff", weight: 1, fillOpacity: 0.1 });
+        }
+      }
       currentHighlight = null;
     }
 
@@ -239,7 +240,10 @@
       saveVisitedTownships();
       populateVisitedList();
       townshipLayer.eachLayer(layer => {
-        if ((layer.feature.properties.MUNICIPAL_NAME || "") === townshipName) {
+        const name = layer.feature.properties.MUNICIPAL_NAME || "";
+        const cleanName = name.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
+        const cleanVisited = townshipName.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
+        if (cleanName === cleanVisited) {
           layer.setStyle({
             color: "green",
             weight: 2,
@@ -285,40 +289,41 @@
     const data = Array.from(visitedTownships).join("\n");
     const blob = new Blob([data], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
     a.href = url;
     a.download = "visited_municipalities.txt";
+    document.body.appendChild(a);
     a.click();
-  }
-
-  function locationError(error) {
-    console.warn(`Geolocation error: ${error.message}`);
-    document.getElementById('info').textContent = "Unable to retrieve your location.";
+    document.body.removeChild(a);
   }
 
   function toggleTheme() {
     darkMode = !darkMode;
+    map.removeLayer(tileLayer);
 
     if (darkMode) {
-      document.body.style.backgroundColor = "#111";
-      document.body.style.color = "#eee";
-      document.getElementById('update-time').style.backgroundColor = "#222";
-
       tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors & CartoDB',
         subdomains: 'abcd',
         maxZoom: 19
       }).addTo(map);
+      document.body.style.backgroundColor = "#111";
+      document.body.style.color = "#eee";
+      document.getElementById('update-time').style.backgroundColor = "#222";
     } else {
-      document.body.style.backgroundColor = "#fff";
-      document.body.style.color = "#111";
-      document.getElementById('update-time').style.backgroundColor = "#f1f1f1";
-
       tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19
       }).addTo(map);
+      document.body.style.backgroundColor = "#fff";
+      document.body.style.color = "#000";
+      document.getElementById('update-time').style.backgroundColor = "#ccc";
     }
+  }
+
+  function locationError(err) {
+    console.warn(`ERROR(${err.code}): ${err.message}`);
   }
 </script>
 
