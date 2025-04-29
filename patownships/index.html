@@ -1,347 +1,134 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Municipality Tracker</title>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link id="leaflet-css" rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Municipality Tracker</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    body {
+    html, body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #111;
-      color: #eee;
-    }
-    #info {
-      padding: 10px;
-      font-size: 20px;
-      text-align: center;
+      padding: 0;
+      font-family: sans-serif;
+      height: 100%;
     }
     #map {
       height: 70vh;
       width: 100%;
     }
-    #update-time {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 14px;
-      background-color: #222;
-      z-index: 1000;
+    #info {
+      position: sticky;
+      top: 0;
+      background: #fff;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      z-index: 999;
     }
     #visited {
       padding: 10px;
-      font-size: 16px;
+      max-height: 30vh;
+      overflow-y: auto;
     }
-    #visited ul {
-      list-style: none;
-      padding: 0;
-      margin: 10px 0 0 0;
+    .county-group {
+      margin-bottom: 1em;
     }
-    #visited li {
-      margin-bottom: 5px;
+    .county-group h3 {
+      margin: 0 0 0.2em 0;
+      font-size: 1.1em;
     }
-    button {
-      background: #333;
-      color: #eee;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 5px;
-      margin: 5px 2px 5px 0;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #555;
-    }
-    #progress-container {
-      margin-top: 10px;
-      background: #ccc;
-      border-radius: 5px;
-      overflow: hidden;
-      height: 20px;
-    }
-    #progress-bar {
-      height: 100%;
-      width: 0%;
-      background: #4caf50;
-      transition: width 0.5s;
-    }
-
-    /* Responsive styling */
-    @media (max-width: 768px) {
-      #update-time {
-        display: none;
-      }
-    }
-
-    @media (min-width: 769px) and (max-width: 1024px) {
-      #update-time {
-        top: auto;
-        bottom: 10px;
-        right: 10px;
-      }
+    .municipality-name {
+      display: inline-block;
+      background: #eee;
+      padding: 3px 8px;
+      margin: 2px;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
-
-<div id="info">Loading your location...</div>
-<div id="map"></div>
-<div id="update-time">Last Updated: --</div>
-<div id="visited">
-  <strong>Visited Municipalities (<span id="visited-count">0</span>, <span id="visited-percent">0.00</span>%)</strong>
-  <div id="progress-container">
-    <div id="progress-bar"></div>
+  <div id="info">
+    <strong>Current Municipality:</strong> <span id="current"></span>
   </div>
-  <ul id="visited-list"></ul>
-  <button onclick="resetProgress()">Reset Progress</button>
-  <button onclick="downloadVisited()">Download Visited List</button>
-  <button onclick="toggleTheme()">Toggle Light/Dark Mode</button>
-</div>
+  <div id="map"></div>
+  <div id="visited">
+    <h2>Visited Municipalities</h2>
+    <div id="visitedList"></div>
+  </div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-ajax"></script>
+  <script>
+    const map = L.map('map').setView([40.05, -75.3], 10);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
 
-<!-- Full JS remains unchanged -->
-<script>
-  let darkMode = true;
+    const visited = new Set(JSON.parse(localStorage.getItem('visitedTownships') || '[]'));
+    const visitedByCounty = {};
 
-  const map = L.map('map').setView([40.2732, -76.8867], 8);
-  let tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors & CartoDB',
-    subdomains: 'abcd',
-    maxZoom: 19
-  }).addTo(map);
+    function updateVisitedDisplay() {
+      const container = document.getElementById('visitedList');
+      container.innerHTML = '';
 
-  let townshipLayer;
-  let currentHighlight = null;
-  let userMarker = null;
-  let lastTownshipName = null;
-  let visitedTownships = new Set(JSON.parse(localStorage.getItem('visitedTownships') || '[]'));
-  let totalTownships = 0;
+      // Group by county
+      for (const county in visitedByCounty) {
+        const towns = visitedByCounty[county];
+        if (towns.length === 0) continue;
 
-  function normalizeClass(classCode) {
-    if (classCode === "2TWP" || classCode === "1TWP") return "Township";
-    if (classCode === "BORO") return "Borough";
-    if (classCode === "CITY") return "City";
-    return classCode;
-  }
+        const group = document.createElement('div');
+        group.className = 'county-group';
+        const heading = document.createElement('h3');
+        heading.textContent = `${county} (${towns.length} visited)`;
+        group.appendChild(heading);
 
-  fetch('townships.geojson')
-    .then(response => response.json())
-    .then(data => {
-      totalTownships = data.features.length;
-      townshipLayer = L.geoJSON(data, {
-        style: function (feature) {
-          const name = feature.properties.MUNICIPAL_NAME || "";
-          const cleanName = name.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-
-          for (const visited of visitedTownships) {
-            const cleanVisited = visited.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-            if (cleanName === cleanVisited) {
-              return { color: "green", weight: 2, fillOpacity: 0.2 };
-            }
-          }
-
-          return { color: "#3388ff", weight: 1, fillOpacity: 0.1 };
-        },
-        onEachFeature: function (feature, layer) {
-          const name = feature.properties.MUNICIPAL_NAME || "Unknown";
-          const classOfMunicipality = normalizeClass(feature.properties.CLASS_OF_MUNIC || "Unknown Type");
-          layer.bindPopup(`${name} (${classOfMunicipality})`);
-        }
-      }).addTo(map);
-
-      populateVisitedList();
-      startTracking();
-    });
-
-  function startTracking() {
-    if (!navigator.geolocation) {
-      alert("Geolocation not supported.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(position => {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-      map.setView([lat, lon], 13);
-      updateLocation(position);
-    }, locationError);
-
-    setInterval(() => {
-      navigator.geolocation.getCurrentPosition(updateLocation, locationError);
-    }, 3000);
-  }
-
-  function updateLocation(position) {
-    const lat = position.coords.latitude;
-    const lon = position.coords.longitude;
-
-    if (userMarker) {
-      userMarker.setLatLng([lat, lon]);
-    } else {
-      userMarker = L.marker([lat, lon]).addTo(map).bindPopup("You are here").openPopup();
-    }
-
-    const now = new Date();
-    document.getElementById('update-time').textContent = "Last Updated: " + now.toLocaleTimeString();
-
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&zoom=10&format=json`)
-      .then(response => response.json())
-      .then(data => {
-        const address = data.address;
-        const townshipName = address.town || address.city || address.village || address.hamlet || "Unknown";
-        const countyName = address.county || "Unknown County";
-
-        document.getElementById('info').textContent = `Current Municipality: ${townshipName} (in ${countyName})`;
-
-        highlightTownship(townshipName);
-        trackVisitedTownship(townshipName);
-      })
-      .catch(err => {
-        console.error('Reverse geocoding error:', err);
-      });
-  }
-
-  function highlightTownship(townshipName) {
-    if (!townshipLayer) return;
-
-    if (currentHighlight) {
-      const name = currentHighlight.feature.properties.MUNICIPAL_NAME || "";
-      const cleanName = name.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-
-      for (const visited of visitedTownships) {
-        const cleanVisited = visited.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-        if (cleanName === cleanVisited) {
-          currentHighlight.setStyle({ color: "green", weight: 2, fillOpacity: 0.2 });
-          break;
-        } else {
-          currentHighlight.setStyle({ color: "#3388ff", weight: 1, fillOpacity: 0.1 });
-        }
-      }
-      currentHighlight = null;
-    }
-
-    townshipLayer.eachLayer(function(layer) {
-      const muniName = layer.feature.properties.MUNICIPAL_NAME || "";
-      const cleanMuni = muniName.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-      const cleanCurrent = townshipName.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-
-      if (cleanMuni === cleanCurrent) {
-        layer.setStyle({
-          color: "red",
-          weight: 3,
-          fillOpacity: 0.3
+        towns.forEach(name => {
+          const div = document.createElement('div');
+          div.className = 'municipality-name';
+          div.textContent = name;
+          group.appendChild(div);
         });
-        currentHighlight = layer;
 
-        if (muniName !== lastTownshipName) {
-          map.fitBounds(layer.getBounds(), { maxZoom: 14 });
-          lastTownshipName = muniName;
-        }
-
-        layer.openPopup();
+        container.appendChild(group);
       }
-    });
-  }
-
-  function trackVisitedTownship(townshipName) {
-    if (!townshipName || townshipName === "Unknown") return;
-
-    if (!visitedTownships.has(townshipName)) {
-      visitedTownships.add(townshipName);
-      saveVisitedTownships();
-      populateVisitedList();
-      townshipLayer.eachLayer(layer => {
-        const name = layer.feature.properties.MUNICIPAL_NAME || "";
-        const cleanName = name.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-        const cleanVisited = townshipName.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-        if (cleanName === cleanVisited) {
-          layer.setStyle({
-            color: "green",
-            weight: 2,
-            fillOpacity: 0.2
-          });
-        }
-      });
     }
-  }
 
-  function populateVisitedList() {
-    const list = document.getElementById('visited-list');
-    list.innerHTML = "";
-
-    visitedTownships.forEach(name => {
-      const li = document.createElement('li');
-      li.textContent = name;
-      list.appendChild(li);
-    });
-
-    document.getElementById('visited-count').textContent = visitedTownships.size;
-    const percent = ((visitedTownships.size / totalTownships) * 100).toFixed(2);
-    document.getElementById('visited-percent').textContent = percent;
-
-    const progressBar = document.getElementById('progress-bar');
-    progressBar.style.width = percent + "%";
-  }
-
-  function saveVisitedTownships() {
-    localStorage.setItem('visitedTownships', JSON.stringify(Array.from(visitedTownships)));
-  }
-
-  function resetProgress() {
-    if (confirm("Are you sure you want to reset your visited municipalities?")) {
-      visitedTownships.clear();
-      saveVisitedTownships();
-      populateVisitedList();
-      location.reload();
+    function displayName(props) {
+      return props.NAME + ' Township, ' + props.COUNTY_NAME + ' County';
     }
-  }
 
-  function downloadVisited() {
-    const data = Array.from(visitedTownships).join("\n");
-    const blob = new Blob([data], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
+    const geojsonLayer = new L.GeoJSON.AJAX('townships.geojson', {
+      onEachFeature: function (feature, layer) {
+        const props = feature.properties;
+        const id = displayName(props);
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = "visited_municipalities.txt";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
+        if (!visitedByCounty[props.COUNTY_NAME]) visitedByCounty[props.COUNTY_NAME] = [];
 
-  function toggleTheme() {
-    darkMode = !darkMode;
-    map.removeLayer(tileLayer);
+        layer.on('mouseover', function () {
+          document.getElementById('current').textContent = id;
+        });
 
-    if (darkMode) {
-      tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors & CartoDB',
-        subdomains: 'abcd',
-        maxZoom: 19
-      }).addTo(map);
-      document.body.style.backgroundColor = "#111";
-      document.body.style.color = "#eee";
-      document.getElementById('update-time').style.backgroundColor = "#222";
-    } else {
-      tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19
-      }).addTo(map);
-      document.body.style.backgroundColor = "#fff";
-      document.body.style.color = "#000";
-      document.getElementById('update-time').style.backgroundColor = "#ccc";
-    }
-  }
+        layer.on('click', function () {
+          if (!visited.has(id)) {
+            visited.add(id);
+            visitedByCounty[props.COUNTY_NAME].push(props.NAME + ' Township');
+          } else {
+            visited.delete(id);
+            visitedByCounty[props.COUNTY_NAME] = visitedByCounty[props.COUNTY_NAME].filter(n => n !== props.NAME + ' Township');
+          }
+          localStorage.setItem('visitedTownships', JSON.stringify([...visited]));
+          updateVisitedDisplay();
+          geojsonLayer.resetStyle(layer);
+        });
 
-  function locationError(err) {
-    console.warn(`ERROR(${err.code}): ${err.message}`);
-  }
-</script>
+        layer.setStyle({
+          color: visited.has(id) ? 'blue' : 'gray',
+          weight: 1,
+          fillOpacity: visited.has(id) ? 0.6 : 0
+        });
+      }
+    }).addTo(map);
 
+    updateVisitedDisplay();
+  </script>
 </body>
 </html>
