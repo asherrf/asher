@@ -4,7 +4,7 @@
   <title>Municipality Tracker</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link id="leaflet-css" rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body {
       margin: 0;
@@ -29,6 +29,11 @@
       border-radius: 5px;
       font-size: 14px;
       background-color: #222;
+    }
+    @media (max-width: 768px) {
+      #update-time {
+        display: none;
+      }
     }
     #visited {
       padding: 10px;
@@ -89,7 +94,7 @@
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 
 <script>
-  let darkMode = true; // default start in dark mode
+  let darkMode = true;
 
   const map = L.map('map').setView([40.2732, -76.8867], 8);
   let tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -101,7 +106,7 @@
   let townshipLayer;
   let currentHighlight = null;
   let userMarker = null;
-  let lastTownshipName = null;
+  let lastTownshipKey = null;
   let visitedTownships = new Set(JSON.parse(localStorage.getItem('visitedTownships') || '[]'));
   let totalTownships = 0;
 
@@ -112,6 +117,14 @@
     return classCode;
   }
 
+  function makeKey(name, county) {
+    return `${name.trim().toLowerCase()}, ${county.trim().toLowerCase()}`;
+  }
+
+  function formatDisplay(name, county) {
+    return `${name} (${county} County)`;
+  }
+
   fetch('townships.geojson')
     .then(response => response.json())
     .then(data => {
@@ -119,21 +132,18 @@
       townshipLayer = L.geoJSON(data, {
         style: function (feature) {
           const name = feature.properties.MUNICIPAL_NAME || "";
-          const cleanName = name.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-
-          for (const visited of visitedTownships) {
-            const cleanVisited = visited.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-            if (cleanName === cleanVisited) {
-              return { color: "green", weight: 2, fillOpacity: 0.2 };
-            }
+          const county = feature.properties.COUNTY_NAME || "";
+          const key = makeKey(name, county);
+          if (visitedTownships.has(key)) {
+            return { color: "green", weight: 2, fillOpacity: 0.2 };
           }
-
           return { color: "#3388ff", weight: 1, fillOpacity: 0.1 };
         },
         onEachFeature: function (feature, layer) {
           const name = feature.properties.MUNICIPAL_NAME || "Unknown";
           const classOfMunicipality = normalizeClass(feature.properties.CLASS_OF_MUNIC || "Unknown Type");
-          layer.bindPopup(`${name} (${classOfMunicipality})`);
+          const county = feature.properties.COUNTY_NAME || "Unknown County";
+          layer.bindPopup(`${name} (${classOfMunicipality}, ${county} County)`);
         }
       }).addTo(map);
 
@@ -181,40 +191,35 @@
 
         document.getElementById('info').textContent = `Current Municipality: ${townshipName} (in ${countyName})`;
 
-        highlightTownship(townshipName);
-        trackVisitedTownship(townshipName);
+        highlightTownship(townshipName, countyName);
+        trackVisitedTownship(townshipName, countyName);
       })
       .catch(err => {
         console.error('Reverse geocoding error:', err);
       });
   }
 
-  function highlightTownship(townshipName) {
+  function highlightTownship(townshipName, countyName) {
     if (!townshipLayer) return;
 
-    if (currentHighlight) {
-      const name = currentHighlight.feature.properties.MUNICIPAL_NAME || "";
-      const cleanName = name.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
+    const currentKey = makeKey(townshipName, countyName);
 
-      for (const visited of visitedTownships) {
-        const cleanVisited = visited.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-        if (cleanName === cleanVisited) {
-          currentHighlight.setStyle({ color: "green", weight: 2, fillOpacity: 0.2 });
-          break;
-        } else {
-          currentHighlight.setStyle({ color: "#3388ff", weight: 1, fillOpacity: 0.1 });
-        }
-      }
+    if (currentHighlight) {
+      const prevKey = makeKey(currentHighlight.feature.properties.MUNICIPAL_NAME || "", currentHighlight.feature.properties.COUNTY_NAME || "");
+      currentHighlight.setStyle({
+        color: visitedTownships.has(prevKey) ? "green" : "#3388ff",
+        weight: visitedTownships.has(prevKey) ? 2 : 1,
+        fillOpacity: visitedTownships.has(prevKey) ? 0.2 : 0.1
+      });
       currentHighlight = null;
     }
 
     townshipLayer.eachLayer(function(layer) {
       const muniName = layer.feature.properties.MUNICIPAL_NAME || "";
+      const county = layer.feature.properties.COUNTY_NAME || "";
+      const layerKey = makeKey(muniName, county);
 
-      const cleanMuni = muniName.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-      const cleanCurrent = townshipName.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-
-      if (cleanMuni === cleanCurrent) {
+      if (layerKey === currentKey) {
         layer.setStyle({
           color: "red",
           weight: 3,
@@ -222,9 +227,9 @@
         });
         currentHighlight = layer;
 
-        if (muniName !== lastTownshipName) {
+        if (layerKey !== lastTownshipKey) {
           map.fitBounds(layer.getBounds(), { maxZoom: 14 });
-          lastTownshipName = muniName;
+          lastTownshipKey = layerKey;
         }
 
         layer.openPopup();
@@ -232,18 +237,17 @@
     });
   }
 
-  function trackVisitedTownship(townshipName) {
-    if (!townshipName || townshipName === "Unknown") return;
+  function trackVisitedTownship(name, county) {
+    if (!name || name === "Unknown") return;
 
-    if (!visitedTownships.has(townshipName)) {
-      visitedTownships.add(townshipName);
+    const key = makeKey(name, county);
+    if (!visitedTownships.has(key)) {
+      visitedTownships.add(key);
       saveVisitedTownships();
       populateVisitedList();
       townshipLayer.eachLayer(layer => {
-        const name = layer.feature.properties.MUNICIPAL_NAME || "";
-        const cleanName = name.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-        const cleanVisited = townshipName.replace(/(Township|City|Borough|Municipality|of)/gi, "").trim().toLowerCase();
-        if (cleanName === cleanVisited) {
+        const layerKey = makeKey(layer.feature.properties.MUNICIPAL_NAME || "", layer.feature.properties.COUNTY_NAME || "");
+        if (layerKey === key) {
           layer.setStyle({
             color: "green",
             weight: 2,
@@ -258,9 +262,10 @@
     const list = document.getElementById('visited-list');
     list.innerHTML = "";
 
-    visitedTownships.forEach(name => {
+    visitedTownships.forEach(key => {
+      const [name, county] = key.split(',').map(s => s.trim());
       const li = document.createElement('li');
-      li.textContent = name;
+      li.textContent = formatDisplay(capitalize(name), capitalize(county));
       list.appendChild(li);
     });
 
@@ -268,8 +273,7 @@
     const percent = ((visitedTownships.size / totalTownships) * 100).toFixed(2);
     document.getElementById('visited-percent').textContent = percent;
 
-    const progressBar = document.getElementById('progress-bar');
-    progressBar.style.width = percent + "%";
+    document.getElementById('progress-bar').style.width = percent + "%";
   }
 
   function saveVisitedTownships() {
@@ -286,10 +290,13 @@
   }
 
   function downloadVisited() {
-    const data = Array.from(visitedTownships).join("\n");
+    const data = Array.from(visitedTownships).map(key => {
+      const [name, county] = key.split(',').map(s => s.trim());
+      return formatDisplay(capitalize(name), capitalize(county));
+    }).join("\n");
+
     const blob = new Blob([data], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement('a');
     a.href = url;
     a.download = "visited_municipalities.txt";
@@ -320,6 +327,10 @@
       document.body.style.color = "#000";
       document.getElementById('update-time').style.backgroundColor = "#ccc";
     }
+  }
+
+  function capitalize(str) {
+    return str.replace(/\b\w/g, c => c.toUpperCase());
   }
 
   function locationError(err) {
